@@ -9,10 +9,13 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-//#include <PID_v1.h>
+#include "process.h"
 #include "PID.h"
+#include "Timeprop.h"
+
 
 static PID pid;
+static Timeprop tp;
 
 const int PIN_ONE_WIRE = 14;
 const int PIN_RELAY = 12;
@@ -31,6 +34,9 @@ byte buttonPressHandled = 0;
 
 HomieNode switchNode("switch", "switch");
 HomieNode temperatureNode("temperature", "temperature");
+
+Process proc(pid, tp, switchNode);
+
 
 bool switchOnHandler(HomieRange range, String value) {
   if (value != "true" && value != "false") return false;
@@ -79,50 +85,11 @@ void loopHandler() {
   }
 }
 
-bool propertyInputHandler(HomieRange range, String value) {
-
-  Homie.getLogger() << "new value is " << value << endl;
-  return true;
-}
-
 void setupHandler()
 {
 	switchNode.setProperty("unit").send("c");
 
-  switchNode.advertise("setpoint").settable(propertyInputHandler);
-	switchNode.setProperty("setpoint").send("19.5");
-
-  switchNode.advertise("propband").settable(propertyInputHandler);
-	switchNode.setProperty("propband").send("5");
-  
-  switchNode.advertise("integraltime").settable(propertyInputHandler);
-	switchNode.setProperty("integraltime").send("1800");
-  
-  switchNode.advertise("derivativetime").settable(propertyInputHandler);
-	switchNode.setProperty("derivativetime").send("15");
-  
-  switchNode.advertise("initialintegral").settable(propertyInputHandler);
-	switchNode.setProperty("initialintegral").send("0.5");
-
-  switchNode.advertise("maxinterval").settable(propertyInputHandler);
-	switchNode.setProperty("maxinterval").send("300");
-  
-  switchNode.advertise("derivativesmooth").settable(propertyInputHandler);
-	switchNode.setProperty("derivativesmooth").send("3");
-  
-  switchNode.advertise("auto").settable(propertyInputHandler);
-	switchNode.setProperty("auto").send("1");
-
-  switchNode.advertise("timprop").settable(propertyInputHandler);
-	switchNode.setProperty("timprop").send("1");
-  
-  switchNode.advertise("manualpower").settable(propertyInputHandler);
-	switchNode.setProperty("manualpower").send("0");
-
-  switchNode.advertise("updatesecs").settable(propertyInputHandler);
-	switchNode.setProperty("updatesecs").send("1");
-  
-  pid.initialise( 19.5, 5, 1800, 15, 0.5, 300, 3, 1, 0 );  
+  proc.init_pid( 19.5, 5, 1800, 15, 0.5, 300, 3, 1, 0 );  
 }
 
 void setup() {
