@@ -62,13 +62,27 @@ void Process::init_pid(
 void Process::init_tp(
     int cycleTime, 
     int deadTime, 
-    unsigned char invert, 
+    bool invert, 
     float fallbackPower, 
     int maxUpdateInterval,
     unsigned long nowSecs
 )
 {
-    m_tp.initialise(cycleTime, deadTime, invert, fallbackPower,
-        maxUpdateInterval, nowSecs);
+    m_node.advertise("cycleTime").settable(propertyInputHandler);
+	m_node.setProperty("cycleTime").send(String(cycleTime));
+
+    m_node.advertise("deadTime").settable(propertyInputHandler);
+	m_node.setProperty("deadTime").send(String(deadTime));
+
+    m_node.advertise("invert").settable(propertyInputHandler);
+	m_node.setProperty("invert").send(String(invert));
+
+    m_node.advertise("fallbackPower").settable(propertyInputHandler);
+	m_node.setProperty("fallbackPower").send(String(fallbackPower));
+
+    m_node.advertise("maxUpdateInterval").settable(propertyInputHandler);
+	m_node.setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
+
+    m_tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
 

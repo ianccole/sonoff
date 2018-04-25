@@ -89,7 +89,26 @@ void setupHandler()
 {
 	switchNode.setProperty("unit").send("c");
 
-  proc.init_pid( 19.5, 5, 1800, 15, 0.5, 300, 3, 1, 0 );  
+  proc.init_pid( 
+    PID_SETPOINT, 
+    PID_PROPBAND, 
+    PID_INTEGRAL_TIME, 
+    PID_DERIVATIVE_TIME, 
+    PID_INITIAL_INT, 
+    PID_MAX_INTERVAL, 
+    PID_DERIV_SMOOTH_FACTOR, 
+    PID_AUTO, 
+    PID_MANUAL_POWER 
+    );  
+
+  proc.init_tp(
+    TIMEPROP_CYCLETIME,
+    TIMEPROP_DEADTIME,
+    TIMEPROP_OPINVERT,
+    TIMEPROP_FALLBACK_POWER,
+    TIMEPROP_MAX_UPDATE_INTERVAL,
+    millis() / 1000
+  ); 
 }
 
 void setup() {
