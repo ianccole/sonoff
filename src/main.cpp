@@ -33,7 +33,7 @@ byte lastButtonState = 1;
 byte buttonPressHandled = 0;
 
 HomieNode switchNode("switch", "switch");
-HomieNode temperatureNode("temperature", "temperature");
+// HomieNode temperatureNode("temperature", "temperature");
 
 Process proc(pid, tp, switchNode);
 
