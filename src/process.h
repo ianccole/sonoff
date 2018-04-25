@@ -123,7 +123,11 @@ public:
         unsigned long nowSecs
     );
 
+void every_second();
+
 private:
+    void run_pid();
+
     PID&        m_pid;
     Timeprop&   m_tp;
     HomieNode&  m_node;

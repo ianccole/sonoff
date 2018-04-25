@@ -86,3 +86,8 @@ void Process::init_tp(
     m_tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
 
+void Process::every_second()
+{
+  static int sec_counter = 0;
+    
+}

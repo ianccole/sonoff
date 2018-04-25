@@ -21,6 +21,7 @@ const int PIN_ONE_WIRE = 14;
 const int PIN_RELAY = 12;
 const int PIN_LED = 13;
 const int PIN_BUTTON = 0;
+const int PIN_REDLED = 4;
 
 const int TEMPERATURE_INTERVAL = 60;			// seconds
 unsigned long lastTemperatureSent = 0;
@@ -37,12 +38,12 @@ HomieNode temperatureNode("temperature", "temperature");
 
 Process proc(pid, tp, switchNode);
 
-
 bool switchOnHandler(HomieRange range, String value) {
   if (value != "true" && value != "false") return false;
 
   bool on = (value == "true");
   digitalWrite(PIN_RELAY, on ? HIGH : LOW);
+  digitalWrite(PIN_REDLED, on ? LOW : HIGH);
   switchNode.setProperty("on").send(value);
   Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
 
@@ -52,6 +53,7 @@ bool switchOnHandler(HomieRange range, String value) {
 void toggleRelay() {
   bool on = digitalRead(PIN_RELAY) == HIGH;
   digitalWrite(PIN_RELAY, on ? LOW : HIGH);
+  digitalWrite(PIN_REDLED, on ? HIGH : LOW);
   switchNode.setProperty("on").send(on ? "false" : "true");
   Homie.getLogger() << "Switch is " << (on ? "off" : "on") << endl;
 }
@@ -116,8 +118,10 @@ void setup() {
   Serial.println();
   Serial.println();
   pinMode(PIN_RELAY, OUTPUT);
+  pinMode(PIN_REDLED, OUTPUT);
   pinMode(PIN_BUTTON, INPUT);
   digitalWrite(PIN_RELAY, LOW);
+  digitalWrite(PIN_REDLED, HIGH);
 
   Homie_setFirmware("itead-sonoff-buton", "1.0.3");
   Homie.setLedPin(PIN_LED, LOW).setResetTrigger(PIN_BUTTON, LOW, 5000);
