@@ -125,8 +125,6 @@ public:
     );
 
     void setHandler(const switchHandler& handler) { _handler = handler; }
-
-
     void everySecond(unsigned long nowSecs);
 
 private:
@@ -139,7 +137,6 @@ private:
     HomieNode&      m_node;
 
     switchHandler   _handler;
-
 };
 
 #endif // process_h

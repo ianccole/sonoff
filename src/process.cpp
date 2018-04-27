@@ -5,8 +5,7 @@
 Process::Process(
     PID & pid,
     Timeprop & tp,
-    HomieNode & node) : m_pid(pid), m_tp(tp), m_node(node), m_state(0), _handler(nullptr)
-{
+    HomieNode & node) : m_pid(pid), m_tp(tp), m_node(node), m_state(0), _handler(nullptr) {
 }
 
 bool propertyInputHandler(HomieRange range, String value) {
@@ -104,7 +103,5 @@ void Process::everySecond(unsigned long nowSecs)
     //     if (newState != bitRead(currentRelayStates, relayNos[i]-1)){
     //     ExecuteCommandPower(relayNos[i], newState);
     //     }
-    // }    
-
-
+    // }
 }
