@@ -94,6 +94,7 @@
 #define TIMEPROP_FALLBACK_POWER      0          // falls back to this if too long betwen power updates
 #define TIMEPROP_MAX_UPDATE_INTERVAL 120        // max no secs that are allowed between power updates (0 to disable)
 
+typedef std::function<bool(bool on)> switchHandler;
 
 class Process {
 public:
@@ -102,7 +103,7 @@ public:
         Timeprop & tp,
         HomieNode & node);
 
-    void init_pid(
+    void initPID(
         double setpoint, 
         double prop_band, 
         double t_integral, 
@@ -114,7 +115,7 @@ public:
         double manual_op
         );
 
-    void init_tp(
+    void initTP(
         int cycleTime, 
         int deadTime, 
         bool invert, 
@@ -123,14 +124,21 @@ public:
         unsigned long nowSecs
     );
 
-void every_second();
+    void setHandler(const switchHandler& handler) { _handler = handler; }
+
+
+    void everySecond(unsigned long nowSecs);
 
 private:
-    void run_pid();
+    void runPID();
 
-    PID&        m_pid;
-    Timeprop&   m_tp;
-    HomieNode&  m_node;
+    PID&            m_pid;
+    Timeprop&       m_tp;
+    int             m_state;
+
+    HomieNode&      m_node;
+
+    switchHandler   _handler;
 
 };
 

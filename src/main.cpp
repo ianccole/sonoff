@@ -38,14 +38,22 @@ HomieNode switchNode("switch", "switch");
 
 Process proc(pid, tp, switchNode);
 
+bool switchOnOff(bool on) {
+
+  digitalWrite(PIN_RELAY, on ? HIGH : LOW);
+  digitalWrite(PIN_REDLED, on ? LOW : HIGH);
+  switchNode.setProperty("on").send(on ? "true" : "false");
+  Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+
+  return digitalRead(PIN_RELAY) == HIGH;;
+}
+
 bool switchOnHandler(HomieRange range, String value) {
   if (value != "true" && value != "false") return false;
 
   bool on = (value == "true");
-  digitalWrite(PIN_RELAY, on ? HIGH : LOW);
-  digitalWrite(PIN_REDLED, on ? LOW : HIGH);
-  switchNode.setProperty("on").send(value);
-  Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+
+  switchOnOff(on);
 
   return true;
 }
@@ -59,6 +67,11 @@ void toggleRelay() {
 }
 
 void loopHandler() {
+    
+    if (millis() % 1000 == 0) {
+      proc.everySecond(millis() / 1000);
+    }
+
     if (millis() - lastTemperatureSent >= TEMPERATURE_INTERVAL * 1000UL || lastTemperatureSent == 0) {
       float temperature = 22; // Fake temperature here, for the example
 
@@ -87,11 +100,12 @@ void loopHandler() {
   }
 }
 
-void setupHandler()
-{
+void setupHandler() {
 	switchNode.setProperty("unit").send("c");
 
-  proc.init_pid( 
+  proc.setHandler(switchOnOff);
+
+  proc.initPID( 
     PID_SETPOINT, 
     PID_PROPBAND, 
     PID_INTEGRAL_TIME, 
@@ -103,7 +117,7 @@ void setupHandler()
     PID_MANUAL_POWER 
     );  
 
-  proc.init_tp(
+  proc.initTP(
     TIMEPROP_CYCLETIME,
     TIMEPROP_DEADTIME,
     TIMEPROP_OPINVERT,

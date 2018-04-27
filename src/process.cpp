@@ -5,7 +5,7 @@
 Process::Process(
     PID & pid,
     Timeprop & tp,
-    HomieNode & node) : m_pid(pid), m_tp(tp), m_node(node)
+    HomieNode & node) : m_pid(pid), m_tp(tp), m_node(node), m_state(0), _handler(nullptr)
 {
 }
 
@@ -13,7 +13,7 @@ bool propertyInputHandler(HomieRange range, String value) {
   return true;
 }
 
-void Process::init_pid(
+void Process::initPID(
     double setpoint, 
     double prop_band, 
     double t_integral, 
@@ -59,7 +59,7 @@ void Process::init_pid(
         integral_default, max_interval, smooth_factor, mode_auto, manual_op );  
 }
 
-void Process::init_tp(
+void Process::initTP(
     int cycleTime, 
     int deadTime, 
     bool invert, 
@@ -86,8 +86,25 @@ void Process::init_tp(
     m_tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
 
-void Process::every_second()
+void Process::everySecond(unsigned long nowSecs)
 {
-  static int sec_counter = 0;
-    
+    static int sec_counter = 0;
+
+    int newState = m_tp.tick(nowSecs);
+
+    if (m_state != newState) {
+
+        // set relay state here....
+        m_state = newState;
+    }
+
+    // void Timeprop_Every_Second() {
+    // for (int i=0; i<TIMEPROP_NUM_OUTPUTS; i++) {
+    //     int newState = timeprops[i].tick(utc_time);
+    //     if (newState != bitRead(currentRelayStates, relayNos[i]-1)){
+    //     ExecuteCommandPower(relayNos[i], newState);
+    //     }
+    // }    
+
+
 }
