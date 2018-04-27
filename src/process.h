@@ -110,6 +110,7 @@ public:
         double t_derivative,
         double integral_default, 
         int max_interval, 
+        int update_seconds,
         double smooth_factor, 
         unsigned char mode_auto, 
         double manual_op
@@ -126,15 +127,22 @@ public:
 
     void setHandler(const switchHandler& handler) { _handler = handler; }
     void everySecond(unsigned long nowSecs);
+    void newPV(float value, unsigned long nowSecs);
 
 private:
-    void runPID();
+    void runPID(int seconds);
 
-    PID&            m_pid;
-    Timeprop&       m_tp;
-    int             m_state;
+    PID&            _pid;
+    Timeprop&       _tp;
+    int             _state;
 
-    HomieNode&      m_node;
+    int             _max_interval = PID_MAX_INTERVAL;
+    int             _update_seconds;
+    long            _last_pv_update_secs;
+    bool            _run_pid_now;
+
+
+    HomieNode&      _node;
 
     switchHandler   _handler;
 };

@@ -66,10 +66,6 @@ void toggleRelay() {
 }
 
 void loopHandler() {
-        
-    if (millis() % 1000 == 0) {
-        proc.everySecond(millis() / 1000);
-    }
 
     if (millis() - lastTemperatureSent >= TEMPERATURE_INTERVAL * 1000UL || lastTemperatureSent == 0) {
         DS18B20.requestTemperatures();
@@ -78,6 +74,11 @@ void loopHandler() {
         Homie.getLogger() << "Temperature: " << temperature << " °C" << endl;
         switchNode.setProperty("degrees").send(String(temperature));
         lastTemperatureSent = millis();
+        proc.newPV(temperature, millis() / 1000);
+    }
+
+    if (millis() % 1000 == 0) {
+        proc.everySecond(millis() / 1000);
     }
     
     byte buttonState = digitalRead(PIN_BUTTON);
@@ -108,7 +109,8 @@ void setupHandler() {
         PID_INTEGRAL_TIME, 
         PID_DERIVATIVE_TIME, 
         PID_INITIAL_INT, 
-        PID_MAX_INTERVAL, 
+        PID_MAX_INTERVAL,
+        PID_UPDATE_SECS, 
         PID_DERIV_SMOOTH_FACTOR, 
         PID_AUTO, 
         PID_MANUAL_POWER 
