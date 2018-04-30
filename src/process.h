@@ -115,7 +115,7 @@ public:
         Timeprop & tp,
         HomieNode & node);
 
-    void setup();
+    // void setup();
 
     void initPID(
         double setpoint, 
@@ -142,6 +142,11 @@ public:
     void setHandler(const switchHandler& handler) { _handler = handler; }
     void everySecond(unsigned long nowSecs);
     void newPV(float value, unsigned long nowSecs);
+
+protected:
+    virtual void setup() override;
+    virtual void loop() override;
+    virtual bool handleInput(const String  &property, const HomieRange& range, const String &value) override;
 
 private:
     void runPID(int seconds);

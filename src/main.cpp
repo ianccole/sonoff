@@ -99,9 +99,9 @@ void loopHandler() {
 }
 
 void setupHandler() {
-    proc.setup();
+    // proc.setup();
 
-    proc.setHandler(switchOnOff);
+    // proc.setHandler(switchOnOff);
 
 }
 

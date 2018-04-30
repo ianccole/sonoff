@@ -40,34 +40,34 @@ bool Process::switchOnHandler(HomieRange range, String value) {
     return true;
 }
 
-void Process::setup(){
-    setProperty("unit").send("c");
+// void Process::setup(){
+//     setProperty("unit").send("c");
 
-    // advertise("on").settable(switchOnHandler);
+//     // advertise("on").settable(switchOnHandler);
 
-    initPID( 
-        PID_SETPOINT, 
-        PID_PROPBAND, 
-        PID_INTEGRAL_TIME, 
-        PID_DERIVATIVE_TIME, 
-        PID_INITIAL_INT, 
-        PID_MAX_INTERVAL,
-        PID_UPDATE_SECS, 
-        PID_DERIV_SMOOTH_FACTOR, 
-        PID_AUTO, 
-        PID_MANUAL_POWER 
-        );  
+//     initPID( 
+//         PID_SETPOINT, 
+//         PID_PROPBAND, 
+//         PID_INTEGRAL_TIME, 
+//         PID_DERIVATIVE_TIME, 
+//         PID_INITIAL_INT, 
+//         PID_MAX_INTERVAL,
+//         PID_UPDATE_SECS, 
+//         PID_DERIV_SMOOTH_FACTOR, 
+//         PID_AUTO, 
+//         PID_MANUAL_POWER 
+//         );  
 
-    initTP(
-        TIMEPROP_CYCLETIME,
-        TIMEPROP_DEADTIME,
-        TIMEPROP_OPINVERT,
-        TIMEPROP_FALLBACK_POWER,
-        TIMEPROP_MAX_UPDATE_INTERVAL,
-        millis() / 1000
-    ); 
+//     initTP(
+//         TIMEPROP_CYCLETIME,
+//         TIMEPROP_DEADTIME,
+//         TIMEPROP_OPINVERT,
+//         TIMEPROP_FALLBACK_POWER,
+//         TIMEPROP_MAX_UPDATE_INTERVAL,
+//         millis() / 1000
+//     ); 
 
-}
+// }
 
 bool propertyInputHandler(HomieRange range, String value) {
   return true;
@@ -208,4 +208,61 @@ void Process::everySecond(unsigned long nowSecs) {
     //     ExecuteCommandPower(relayNos[i], newState);
     //     }
     // }
+}
+
+void Process::setup() {
+    setProperty("unit").send("c");
+
+    // advertise("on").settable(switchOnHandler);
+
+    initPID( 
+        PID_SETPOINT, 
+        PID_PROPBAND, 
+        PID_INTEGRAL_TIME, 
+        PID_DERIVATIVE_TIME, 
+        PID_INITIAL_INT, 
+        PID_MAX_INTERVAL,
+        PID_UPDATE_SECS, 
+        PID_DERIV_SMOOTH_FACTOR, 
+        PID_AUTO, 
+        PID_MANUAL_POWER 
+        );  
+
+    initTP(
+        TIMEPROP_CYCLETIME,
+        TIMEPROP_DEADTIME,
+        TIMEPROP_OPINVERT,
+        TIMEPROP_FALLBACK_POWER,
+        TIMEPROP_MAX_UPDATE_INTERVAL,
+        millis() / 1000
+    ); 
+}
+
+void Process::loop() {
+    if (millis() % 1000 == 0) {
+        everySecond(millis() / 1000);
+    }
+}
+
+bool Process::handleInput(const String  &property, const HomieRange& range, const String &value) {
+	int16_t id = range.index;
+	// if (id <= 0 || id > 16) {
+	// 	LN.logf("RelaisNode::handleInput()", LoggerNode::ERROR,
+	// 			"Receive unknown property %s with value %s.", property.c_str(),
+	// 			value.c_str());
+	// 	return false;
+	// }
+	// bool on = value.equalsIgnoreCase("ON");
+	// uint16_t selected_bit = (1 << (id-1));
+	// bool inverted = (invert_bitset & selected_bit) != 0;
+	// LN.logf("RelaisNode::handleInput()", LoggerNode::INFO,
+	// 		"Receive command to switch %d to %c%s.", id, inverted ? '~':' ', on ? "On" : "Off");
+
+	// if (on ^ inverted ) {
+	// 	relais_bitset |= selected_bit;
+	// } else	{
+	// 	relais_bitset &= ~selected_bit;
+	// }
+	// updateMaskLoop |= selected_bit;
+	return true;
 }
