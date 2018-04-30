@@ -4,14 +4,8 @@ const int PIN_RELAY = 12;
 const int PIN_LED = 13;
 const int PIN_REDLED = 4;
 
-Process::Process(
-    PID & pid,
-    Timeprop & tp,
-    HomieNode & node) 
+Process::Process() 
     : HomieNode("switch", "switch"),
-    _pid(pid), 
-    _tp(tp), 
-    _node(node), 
     _state(0), 
     _handler(nullptr),
     _max_interval(PID_MAX_INTERVAL),
@@ -40,34 +34,32 @@ bool Process::switchOnHandler(HomieRange range, String value) {
     return true;
 }
 
-// void Process::setup(){
-//     setProperty("unit").send("c");
+void Process::init() {
+    setProperty("unit").send("c");
+    advertise("on").settable();
 
-//     // advertise("on").settable(switchOnHandler);
+    initPID( 
+        PID_SETPOINT, 
+        PID_PROPBAND, 
+        PID_INTEGRAL_TIME, 
+        PID_DERIVATIVE_TIME, 
+        PID_INITIAL_INT, 
+        PID_MAX_INTERVAL,
+        PID_UPDATE_SECS, 
+        PID_DERIV_SMOOTH_FACTOR, 
+        PID_AUTO, 
+        PID_MANUAL_POWER 
+        );  
 
-//     initPID( 
-//         PID_SETPOINT, 
-//         PID_PROPBAND, 
-//         PID_INTEGRAL_TIME, 
-//         PID_DERIVATIVE_TIME, 
-//         PID_INITIAL_INT, 
-//         PID_MAX_INTERVAL,
-//         PID_UPDATE_SECS, 
-//         PID_DERIV_SMOOTH_FACTOR, 
-//         PID_AUTO, 
-//         PID_MANUAL_POWER 
-//         );  
-
-//     initTP(
-//         TIMEPROP_CYCLETIME,
-//         TIMEPROP_DEADTIME,
-//         TIMEPROP_OPINVERT,
-//         TIMEPROP_FALLBACK_POWER,
-//         TIMEPROP_MAX_UPDATE_INTERVAL,
-//         millis() / 1000
-//     ); 
-
-// }
+    initTP(
+        TIMEPROP_CYCLETIME,
+        TIMEPROP_DEADTIME,
+        TIMEPROP_OPINVERT,
+        TIMEPROP_FALLBACK_POWER,
+        TIMEPROP_MAX_UPDATE_INTERVAL,
+        millis() / 1000
+    ); 
+}
 
 bool propertyInputHandler(HomieRange range, String value) {
   return true;
@@ -86,38 +78,38 @@ void Process::initPID(
     double manual_op
     )
 {
-    _node.advertise("setpoint").settable(propertyInputHandler);
-	_node.setProperty("setpoint").send(String(setpoint));
+    advertise("setpoint").settable(propertyInputHandler);
+	setProperty("setpoint").send(String(setpoint));
 
-    _node.advertise("propband").settable(propertyInputHandler);
-	_node.setProperty("propband").send(String(prop_band));
+    advertise("propband").settable(propertyInputHandler);
+	setProperty("propband").send(String(prop_band));
   
-    _node.advertise("integraltime").settable(propertyInputHandler);
-	_node.setProperty("integraltime").send(String(t_integral));
+    advertise("integraltime").settable(propertyInputHandler);
+	setProperty("integraltime").send(String(t_integral));
   
-    _node.advertise("derivativetime").settable(propertyInputHandler);
-	_node.setProperty("derivativetime").send(String(t_derivative));
+    advertise("derivativetime").settable(propertyInputHandler);
+	setProperty("derivativetime").send(String(t_derivative));
   
-    _node.advertise("initialintegral").settable(propertyInputHandler);
-	_node.setProperty("initialintegral").send(String(integral_default));
+    advertise("initialintegral").settable(propertyInputHandler);
+	setProperty("initialintegral").send(String(integral_default));
 
-    _node.advertise("maxinterval").settable(propertyInputHandler);
-	_node.setProperty("maxinterval").send(String(max_interval));
+    advertise("maxinterval").settable(propertyInputHandler);
+	setProperty("maxinterval").send(String(max_interval));
 
-    _node.advertise("updateSeconds").settable(propertyInputHandler);
-	_node.setProperty("updateSeconds").send(String(update_seconds));
+    advertise("updateSeconds").settable(propertyInputHandler);
+	setProperty("updateSeconds").send(String(update_seconds));
   
-    _node.advertise("derivativesmooth").settable(propertyInputHandler);
-	_node.setProperty("derivativesmooth").send(String(smooth_factor));
+    advertise("derivativesmooth").settable(propertyInputHandler);
+	setProperty("derivativesmooth").send(String(smooth_factor));
   
-    _node.advertise("auto").settable(propertyInputHandler);
-	_node.setProperty("auto").send(String(mode_auto));
+    advertise("auto").settable(propertyInputHandler);
+	setProperty("auto").send(String(mode_auto));
 
-    _node.advertise("manualpower").settable(propertyInputHandler);
-	_node.setProperty("manualpower").send(String(manual_op));
+    advertise("manualpower").settable(propertyInputHandler);
+	setProperty("manualpower").send(String(manual_op));
 
-    _node.advertise("updatesecs").settable(propertyInputHandler);
-	_node.setProperty("updatesecs").send(String(1));
+    advertise("updatesecs").settable(propertyInputHandler);
+	setProperty("updatesecs").send(String(1));
     
     _pid.initialise( setpoint, prop_band, t_integral, t_derivative, 
         integral_default, max_interval, smooth_factor, mode_auto, manual_op );  
@@ -132,20 +124,20 @@ void Process::initTP(
     unsigned long nowSecs
 )
 {
-    _node.advertise("cycleTime").settable(propertyInputHandler);
-	_node.setProperty("cycleTime").send(String(cycleTime));
+    advertise("cycleTime").settable(propertyInputHandler);
+	setProperty("cycleTime").send(String(cycleTime));
 
-    _node.advertise("deadTime").settable(propertyInputHandler);
-	_node.setProperty("deadTime").send(String(deadTime));
+    advertise("deadTime").settable(propertyInputHandler);
+	setProperty("deadTime").send(String(deadTime));
 
-    _node.advertise("invert").settable(propertyInputHandler);
-	_node.setProperty("invert").send(String(invert));
+    advertise("invert").settable(propertyInputHandler);
+	setProperty("invert").send(String(invert));
 
-    _node.advertise("fallbackPower").settable(propertyInputHandler);
-	_node.setProperty("fallbackPower").send(String(fallbackPower));
+    advertise("fallbackPower").settable(propertyInputHandler);
+	setProperty("fallbackPower").send(String(fallbackPower));
 
-    _node.advertise("maxUpdateInterval").settable(propertyInputHandler);
-	_node.setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
+    advertise("maxUpdateInterval").settable(propertyInputHandler);
+	setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
 
     _tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
@@ -215,27 +207,12 @@ void Process::setup() {
 
     // advertise("on").settable(switchOnHandler);
 
-    initPID( 
-        PID_SETPOINT, 
-        PID_PROPBAND, 
-        PID_INTEGRAL_TIME, 
-        PID_DERIVATIVE_TIME, 
-        PID_INITIAL_INT, 
-        PID_MAX_INTERVAL,
-        PID_UPDATE_SECS, 
-        PID_DERIV_SMOOTH_FACTOR, 
-        PID_AUTO, 
-        PID_MANUAL_POWER 
-        );  
+    init();
+}
 
-    initTP(
-        TIMEPROP_CYCLETIME,
-        TIMEPROP_DEADTIME,
-        TIMEPROP_OPINVERT,
-        TIMEPROP_FALLBACK_POWER,
-        TIMEPROP_MAX_UPDATE_INTERVAL,
-        millis() / 1000
-    ); 
+void Process::onReadyToOperate() {
+	// LN.log("RelaisNode", LoggerNode::DEBUG, "Ready");
+	// RelaisNode::updateRelais(0xFFFF);
 }
 
 void Process::loop() {

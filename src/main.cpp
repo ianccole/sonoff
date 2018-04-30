@@ -13,9 +13,6 @@
 #include "PID.h"
 #include "Timeprop.h"
 
-static PID pid;
-static Timeprop tp;
-
 const int PIN_ONE_WIRE = 14;
 const int PIN_RELAY = 12;
 const int PIN_LED = 13;
@@ -35,7 +32,7 @@ byte buttonPressHandled = 0;
 HomieNode switchNode("switch", "switch");
 // HomieNode temperatureNode("temperature", "temperature");
 
-Process proc(pid, tp, switchNode);
+static Process proc;
 
 bool switchOnOff(bool on) {
 
@@ -77,9 +74,9 @@ void loopHandler() {
         proc.newPV(temperature, millis() / 1000);
     }
 
-    if (millis() % 1000 == 0) {
-        proc.everySecond(millis() / 1000);
-    }
+    // if (millis() % 1000 == 0) {
+    //     proc.everySecond(millis() / 1000);
+    // }
     
     byte buttonState = digitalRead(PIN_BUTTON);
     if ( buttonState != lastButtonState ) {
@@ -100,9 +97,7 @@ void loopHandler() {
 
 void setupHandler() {
     // proc.setup();
-
     // proc.setHandler(switchOnOff);
-
 }
 
 void setup() {

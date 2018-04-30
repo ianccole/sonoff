@@ -108,14 +108,23 @@ class RelaisNode : public HomieNode {
 
 class Process: public HomieNode {
 public:
-    //Process() : HomieNode("Relais", "switch8");
+    Process();
 
-    Process(
-        PID & pid,
-        Timeprop & tp,
-        HomieNode & node);
+    void setHandler(const switchHandler& handler) { _handler = handler; }
+    void newPV(float value, unsigned long nowSecs);
 
-    // void setup();
+protected:
+    virtual void setup() override;
+    virtual void loop() override;
+    virtual void onReadyToOperate() override;
+    virtual bool handleInput(const String  &property, const HomieRange& range, const String &value) override;
+
+private:
+    void init();
+    void runPID(int seconds);
+    bool switchOnOff(bool on);
+    bool switchOnHandler(HomieRange range, String value);
+    void everySecond(unsigned long nowSecs);
 
     void initPID(
         double setpoint, 
@@ -139,31 +148,14 @@ public:
         unsigned long nowSecs
     );
 
-    void setHandler(const switchHandler& handler) { _handler = handler; }
-    void everySecond(unsigned long nowSecs);
-    void newPV(float value, unsigned long nowSecs);
-
-protected:
-    virtual void setup() override;
-    virtual void loop() override;
-    virtual bool handleInput(const String  &property, const HomieRange& range, const String &value) override;
-
-private:
-    void runPID(int seconds);
-    bool switchOnOff(bool on);
-    bool switchOnHandler(HomieRange range, String value);
-
-    PID&            _pid;
-    Timeprop&       _tp;
+    PID             _pid;
+    Timeprop        _tp;
     int             _state;
 
     int             _max_interval = PID_MAX_INTERVAL;
     int             _update_seconds;
     long            _last_pv_update_secs;
     bool            _run_pid_now;
-
-
-    HomieNode&      _node;
 
     switchHandler   _handler;
 };
