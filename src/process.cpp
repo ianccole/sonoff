@@ -1,12 +1,14 @@
-
-
 #include "process.h"
+
+const int PIN_RELAY = 12;
+const int PIN_LED = 13;
+const int PIN_REDLED = 4;
 
 Process::Process(
     PID & pid,
     Timeprop & tp,
     HomieNode & node) 
-    : 
+    : HomieNode("switch", "switch"),
     _pid(pid), 
     _tp(tp), 
     _node(node), 
@@ -16,6 +18,55 @@ Process::Process(
     _update_seconds(PID_UPDATE_SECS),
     _last_pv_update_secs(0),
     _run_pid_now(false) {
+}
+
+bool Process::switchOnOff(bool on) {
+
+    digitalWrite(PIN_RELAY, on ? HIGH : LOW);
+    digitalWrite(PIN_REDLED, on ? LOW : HIGH);
+    setProperty("on").send(on ? "true" : "false");
+    Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+
+    return digitalRead(PIN_RELAY) == HIGH;;
+}
+
+bool Process::switchOnHandler(HomieRange range, String value) {
+    if (value != "true" && value != "false") return false;
+
+    bool on = (value == "true");
+
+    switchOnOff(on);
+
+    return true;
+}
+
+void Process::setup(){
+    setProperty("unit").send("c");
+
+    // advertise("on").settable(switchOnHandler);
+
+    initPID( 
+        PID_SETPOINT, 
+        PID_PROPBAND, 
+        PID_INTEGRAL_TIME, 
+        PID_DERIVATIVE_TIME, 
+        PID_INITIAL_INT, 
+        PID_MAX_INTERVAL,
+        PID_UPDATE_SECS, 
+        PID_DERIV_SMOOTH_FACTOR, 
+        PID_AUTO, 
+        PID_MANUAL_POWER 
+        );  
+
+    initTP(
+        TIMEPROP_CYCLETIME,
+        TIMEPROP_DEADTIME,
+        TIMEPROP_OPINVERT,
+        TIMEPROP_FALLBACK_POWER,
+        TIMEPROP_MAX_UPDATE_INTERVAL,
+        millis() / 1000
+    ); 
+
 }
 
 bool propertyInputHandler(HomieRange range, String value) {

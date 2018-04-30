@@ -99,31 +99,10 @@ void loopHandler() {
 }
 
 void setupHandler() {
-    switchNode.setProperty("unit").send("c");
+    proc.setup();
 
     proc.setHandler(switchOnOff);
 
-    proc.initPID( 
-        PID_SETPOINT, 
-        PID_PROPBAND, 
-        PID_INTEGRAL_TIME, 
-        PID_DERIVATIVE_TIME, 
-        PID_INITIAL_INT, 
-        PID_MAX_INTERVAL,
-        PID_UPDATE_SECS, 
-        PID_DERIV_SMOOTH_FACTOR, 
-        PID_AUTO, 
-        PID_MANUAL_POWER 
-        );  
-
-    proc.initTP(
-        TIMEPROP_CYCLETIME,
-        TIMEPROP_DEADTIME,
-        TIMEPROP_OPINVERT,
-        TIMEPROP_FALLBACK_POWER,
-        TIMEPROP_MAX_UPDATE_INTERVAL,
-        millis() / 1000
-    ); 
 }
 
 void setup() {
@@ -139,7 +118,7 @@ void setup() {
     Homie_setFirmware("itead-sonoff-buton", "1.0.3");
     Homie.setLedPin(PIN_LED, LOW).setResetTrigger(PIN_BUTTON, LOW, 5000);
 
-    switchNode.advertise("on").settable(switchOnHandler);
+    // switchNode.advertise("on").settable(switchOnHandler);
 
     Homie.setSetupFunction(setupHandler);
     Homie.setLoopFunction(loopHandler);

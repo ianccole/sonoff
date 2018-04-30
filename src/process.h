@@ -96,12 +96,26 @@
 
 typedef std::function<bool(bool on)> switchHandler;
 
-class Process {
+class RelaisNode : public HomieNode {
+ public:
+    RelaisNode();
+
+ protected:
+  virtual bool handleInput(const String& property, const HomieRange& range, const String& value) {
+
+  };
+};
+
+class Process: public HomieNode {
 public:
+    //Process() : HomieNode("Relais", "switch8");
+
     Process(
         PID & pid,
         Timeprop & tp,
         HomieNode & node);
+
+    void setup();
 
     void initPID(
         double setpoint, 
@@ -131,6 +145,8 @@ public:
 
 private:
     void runPID(int seconds);
+    bool switchOnOff(bool on);
+    bool switchOnHandler(HomieRange range, String value);
 
     PID&            _pid;
     Timeprop&       _tp;
