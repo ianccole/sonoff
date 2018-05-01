@@ -115,7 +115,6 @@ public:
 
     );
 
-    void setHandler(const switchHandler& handler) { _handler = handler; }
     void newPV(float value, unsigned long nowSecs);
 
 protected:
@@ -125,10 +124,10 @@ protected:
     virtual bool handleInput(const String  &property, const HomieRange& range, const String &value) override;
 
 private:
-    void init();
     void runPID(int seconds);
     bool switchOnOff(bool on);
     bool switchOnHandler(HomieRange range, String value);
+    bool procHandler(const String  &property, HomieRange range, String value);
     void everySecond(unsigned long nowSecs);
 
     void toggleRelay();
@@ -166,8 +165,6 @@ private:
     int             _update_seconds;
     long            _last_pv_update_secs;
     bool            _run_pid_now;
-
-    switchHandler   _handler;
 };
 
 #endif // process_h

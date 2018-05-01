@@ -10,7 +10,6 @@ Process::Process(
     _pinLED(pinLED),
     _pinButton(pinButton),
     _state(0), 
-    _handler(nullptr),
     _max_interval(PID_MAX_INTERVAL),
     _update_seconds(PID_UPDATE_SECS),
     _last_pv_update_secs(0),
@@ -37,9 +36,200 @@ bool Process::switchOnHandler(HomieRange range, String value) {
     return true;
 }
 
-void Process::init() {
-    setProperty("unit").send("c");
+bool Process::procHandler(const String  &property, HomieRange range, String value) {
+
+    if ( property.equalsIgnoreCase("setpoint") ) {
+    	setProperty(property).send(value);
+        _pid.setSp(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("propband") ) {
+    	setProperty(property).send(value);
+        _pid.setPb(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("integraltime") ) {
+    	setProperty(property).send(value);
+        _pid.setTi(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("derivativetime") ) {
+    	setProperty(property).send(value);
+        _pid.setTd(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("initialintegral") ) {
+    	setProperty(property).send(value);
+        _pid.setInitialInt(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("maxinterval") ) {
+    	setProperty(property).send(value);
+        _pid.setMaxInterval(value.toInt());
+    }
+    // if ( property.equalsIgnoreCase("updateSeconds") ) {
+    //     _pid.set(value.toInt);
+    // }
+    if ( property.equalsIgnoreCase("derivativesmooth") ) {
+    	setProperty(property).send(value);
+         _pid.setDSmooth(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("auto") ) {
+    	setProperty(property).send(value);
+         _pid.setAuto(value.toInt());
+    }
+    if ( property.equalsIgnoreCase("manualpower") ) {
+    	setProperty(property).send(value);
+         _pid.setManualPower(value.toFloat());
+    }
+    // if ( property.equalsIgnoreCase("updatesecs") ) {
+    //      _pid.set(value.toFloat);
+    // }
+
+    if ( property.equalsIgnoreCase("cycleTime") ) {
+    	setProperty(property).send(value);
+         _tp.setCt(value.toInt());
+    }
+    if ( property.equalsIgnoreCase("deadTime") ) {
+    	setProperty(property).send(value);
+         _tp.setDt(value.toInt());
+    }
+    if ( property.equalsIgnoreCase("invert") ) {
+    	setProperty(property).send(value);
+         _tp.setInvert(value.toInt());
+    }
+    if ( property.equalsIgnoreCase("fallbackPower") ) {
+    	setProperty(property).send(value);
+         _tp.setFallback(value.toFloat());
+    }
+    if ( property.equalsIgnoreCase("maxUpdateInterval") ) {
+    	setProperty(property).send(value);
+         _tp.setInterval(value.toInt());
+    }
+
+    return true;
+}
+
+void Process::initPID(
+    double setpoint, 
+    double prop_band, 
+    double t_integral, 
+    double t_derivative,
+    double integral_default, 
+    int max_interval,
+    int update_seconds,
+    double smooth_factor, 
+    unsigned char mode_auto, 
+    double manual_op
+    )
+{
+	setProperty("setpoint").send(String(setpoint));
+	setProperty("propband").send(String(prop_band));
+	setProperty("integraltime").send(String(t_integral));
+	setProperty("derivativetime").send(String(t_derivative));
+	setProperty("initialintegral").send(String(integral_default));
+	setProperty("maxinterval").send(String(max_interval));
+	setProperty("updateSeconds").send(String(update_seconds));
+	setProperty("derivativesmooth").send(String(smooth_factor));
+	setProperty("auto").send(String(mode_auto));
+	setProperty("manualpower").send(String(manual_op));
+	setProperty("updatesecs").send(String(1));
+    
+    _pid.initialise( setpoint, prop_band, t_integral, t_derivative, 
+        integral_default, max_interval, smooth_factor, mode_auto, manual_op );  
+}
+
+void Process::initTP(
+    int cycleTime, 
+    int deadTime, 
+    bool invert, 
+    float fallbackPower, 
+    int maxUpdateInterval,
+    unsigned long nowSecs
+)
+{
+	setProperty("cycleTime").send(String(cycleTime));
+	setProperty("deadTime").send(String(deadTime));
+	setProperty("invert").send(String(invert));
+	setProperty("fallbackPower").send(String(fallbackPower));
+	setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
+
+    _tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
+}
+
+void Process::newPV(float value, unsigned long seconds) {
+    Homie.getLogger() << "Temperature: " << value << " °C" << endl;
+    setProperty("degrees").send(String(value));
+
+    _last_pv_update_secs = seconds;
+    _pid.setPv(value, seconds);
+    if (_update_seconds == 0) {
+        _run_pid_now = true;
+    }
+}
+
+void Process::runPID(int seconds) {
+    Homie.getLogger() << "runPID seconds: " << seconds << endl;
+
+    double power = _pid.tick(seconds);
+
+    Homie.getLogger() << "runPID power: " << power << endl;
+    setProperty("power").send(String(power));
+
+    _tp.setPower(power, seconds);
+}
+
+void Process::everySecond(unsigned long nowSecs) {
+    static int sec_counter = 0;
+
+    if (_run_pid_now  || nowSecs - _last_pv_update_secs > _max_interval  ||  (_update_seconds != 0 && sec_counter++ % _update_seconds  ==  0)) {
+        runPID(nowSecs);
+        _run_pid_now = false;
+    }
+
+    int newState = _tp.tick(nowSecs);
+    if (_state != newState) {
+        static int change_secs = 0;
+        Homie.getLogger() << "new switch " << (newState ? "on" : "off") <<  " at : " << nowSecs << endl;
+        switchOnOff(newState);
+        setProperty("state").send(String(newState));
+        setProperty("stateTime").send(String(nowSecs-change_secs));
+        Homie.getLogger() << "state time: " << nowSecs-change_secs << endl;
+        _state = newState;
+        change_secs = nowSecs;
+    }
+}
+
+void Process::setup() {
     advertise("on").settable();
+    advertise("unit");
+    advertise("degrees");
+
+    advertise("setpoint").settable();
+    advertise("propband").settable();
+    advertise("integraltime").settable();
+    advertise("derivativetime").settable();
+    advertise("initialintegral").settable();
+    advertise("maxinterval").settable();
+    advertise("updateSeconds").settable();
+    advertise("derivativesmooth").settable();
+    advertise("auto").settable();
+    advertise("manualpower").settable();
+    advertise("updatesecs").settable();
+    advertise("power");
+
+    advertise("cycleTime").settable();
+    advertise("deadTime").settable();
+    advertise("invert").settable();
+    advertise("fallbackPower").settable();
+    advertise("maxUpdateInterval").settable();
+    advertise("state");
+    advertise("stateTime");
+    
+    pinMode(_pinRelay, OUTPUT);
+    pinMode(_pinLED, OUTPUT);
+    pinMode(_pinButton, INPUT);
+    digitalWrite(_pinRelay, LOW);
+    digitalWrite(_pinLED, HIGH);
+}
+
+void Process::onReadyToOperate() {
+    setProperty("unit").send("c");
 
     initPID( 
         PID_SETPOINT, 
@@ -61,161 +251,7 @@ void Process::init() {
         TIMEPROP_FALLBACK_POWER,
         TIMEPROP_MAX_UPDATE_INTERVAL,
         millis() / 1000
-    ); 
-}
-
-bool propertyInputHandler(HomieRange range, String value) {
-  return true;
-}
-
-void Process::initPID(
-    double setpoint, 
-    double prop_band, 
-    double t_integral, 
-    double t_derivative,
-    double integral_default, 
-    int max_interval,
-    int update_seconds,
-    double smooth_factor, 
-    unsigned char mode_auto, 
-    double manual_op
-    )
-{
-    advertise("setpoint").settable(propertyInputHandler);
-	setProperty("setpoint").send(String(setpoint));
-
-    advertise("propband").settable(propertyInputHandler);
-	setProperty("propband").send(String(prop_band));
-  
-    advertise("integraltime").settable(propertyInputHandler);
-	setProperty("integraltime").send(String(t_integral));
-  
-    advertise("derivativetime").settable(propertyInputHandler);
-	setProperty("derivativetime").send(String(t_derivative));
-  
-    advertise("initialintegral").settable(propertyInputHandler);
-	setProperty("initialintegral").send(String(integral_default));
-
-    advertise("maxinterval").settable(propertyInputHandler);
-	setProperty("maxinterval").send(String(max_interval));
-
-    advertise("updateSeconds").settable(propertyInputHandler);
-	setProperty("updateSeconds").send(String(update_seconds));
-  
-    advertise("derivativesmooth").settable(propertyInputHandler);
-	setProperty("derivativesmooth").send(String(smooth_factor));
-  
-    advertise("auto").settable(propertyInputHandler);
-	setProperty("auto").send(String(mode_auto));
-
-    advertise("manualpower").settable(propertyInputHandler);
-	setProperty("manualpower").send(String(manual_op));
-
-    advertise("updatesecs").settable(propertyInputHandler);
-	setProperty("updatesecs").send(String(1));
-    
-    _pid.initialise( setpoint, prop_band, t_integral, t_derivative, 
-        integral_default, max_interval, smooth_factor, mode_auto, manual_op );  
-}
-
-void Process::initTP(
-    int cycleTime, 
-    int deadTime, 
-    bool invert, 
-    float fallbackPower, 
-    int maxUpdateInterval,
-    unsigned long nowSecs
-)
-{
-    advertise("cycleTime").settable(propertyInputHandler);
-	setProperty("cycleTime").send(String(cycleTime));
-
-    advertise("deadTime").settable(propertyInputHandler);
-	setProperty("deadTime").send(String(deadTime));
-
-    advertise("invert").settable(propertyInputHandler);
-	setProperty("invert").send(String(invert));
-
-    advertise("fallbackPower").settable(propertyInputHandler);
-	setProperty("fallbackPower").send(String(fallbackPower));
-
-    advertise("maxUpdateInterval").settable(propertyInputHandler);
-	setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
-
-    _tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
-}
-
-void Process::newPV(float value, unsigned long seconds) {
-    Homie.getLogger() << "new PV: " << value << " at " << seconds << endl;
-
-    _last_pv_update_secs = seconds;
-    _pid.setPv(value, seconds);
-    if (_update_seconds == 0) {
-        _run_pid_now = true;
-    }
-}
-
-void Process::runPID(int seconds) {
-    Homie.getLogger() << "runPID seconds: " << seconds << endl;
-
-    double power = _pid.tick(seconds);
-
-    Homie.getLogger() << "runPID power: " << power << endl;
-
-//   char buf[10];
-//   dtostrfd(power, 3, buf);
-//   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), "power", buf);
-//   MqttPublishPrefixTopic_P(TELE, "PID", false);
-
-// #if defined PID_USE_TIMPROP
-//     // send power to appropriate timeprop output
-//     Timeprop_Set_Power( PID_USE_TIMPROP-1, power );
-// #endif // PID_USE_TIMPROP
-
-    _tp.setPower(power, seconds);
-}
-
-void Process::everySecond(unsigned long nowSecs) {
-    static int sec_counter = 0;
-
-    // Homie.getLogger() << "sec_counter: " << sec_counter << endl;
-    // Homie.getLogger() << "sec_counter: " << sec_counter << endl;
-
-    if (_run_pid_now  || nowSecs - _last_pv_update_secs > _max_interval  ||  (_update_seconds != 0 && sec_counter++ % _update_seconds  ==  0)) {
-        runPID(nowSecs);
-        _run_pid_now = false;
-    }
-
-    int newState = _tp.tick(nowSecs);
-    if (_state != newState) {
-        Homie.getLogger() << "new switch " << (newState ? "on" : "off") <<  " at : " << nowSecs << endl;
-        if (_handler){
-            _handler(newState);    
-        }
-
-        _state = newState;
-    }
-
-    // void Timeprop_Every_Second() {
-    // for (int i=0; i<TIMEPROP_NUM_OUTPUTS; i++) {
-    //     int newState = timeprops[i].tick(utc_time);
-    //     if (newState != bitRead(currentRelayStates, relayNos[i]-1)){
-    //     ExecuteCommandPower(relayNos[i], newState);
-    //     }
-    // }
-}
-
-void Process::setup() {
-    setProperty("unit").send("c");
-    advertise("on").settable();
-
-
-    init();
-}
-
-void Process::onReadyToOperate() {
-	// LN.log("RelaisNode", LoggerNode::DEBUG, "Ready");
-	// RelaisNode::updateRelais(0xFFFF);
+    );     
 }
 
 void Process::toggleRelay() {
@@ -249,42 +285,24 @@ void Process::loop() {
             }
         }
         lastButtonState = buttonState;
-    }
-    
+    }  
 }
 
 bool Process::handleInput(const String  &property, const HomieRange& range, const String &value) {
     Homie.getLogger() 
-        << "Event: property " 
+        << "property: " 
         << property
-        << "index " 
+        << " index: " 
         << range.index
-        << "value " 
+        << " value: " 
         << value 
         << endl;
 
     if ( property.equalsIgnoreCase("on") ) {
-        switchOnHandler(range,value);
+        return switchOnHandler(range,value);
     }
 
-	// int16_t id = range.index;
-	// if (id <= 0 || id > 16) {
-	// 	LN.logf("RelaisNode::handleInput()", LoggerNode::ERROR,
-	// 			"Receive unknown property %s with value %s.", property.c_str(),
-	// 			value.c_str());
-	// 	return false;
-	// }
-	// bool on = value.equalsIgnoreCase("ON");
-	// uint16_t selected_bit = (1 << (id-1));
-	// bool inverted = (invert_bitset & selected_bit) != 0;
-	// LN.logf("RelaisNode::handleInput()", LoggerNode::INFO,
-	// 		"Receive command to switch %d to %c%s.", id, inverted ? '~':' ', on ? "On" : "Off");
-
-	// if (on ^ inverted ) {
-	// 	relais_bitset |= selected_bit;
-	// } else	{
-	// 	relais_bitset &= ~selected_bit;
-	// }
-	// updateMaskLoop |= selected_bit;
+    return procHandler(property,range,value);
+ 
 	return true;
 }

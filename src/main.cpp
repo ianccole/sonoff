@@ -29,38 +29,38 @@ unsigned long buttonDownTime = 0;
 byte lastButtonState = 1;
 byte buttonPressHandled = 0;
 
-HomieNode switchNode("switch", "switch");
+// HomieNode switchNode("switch", "switch");
 // HomieNode temperatureNode("temperature", "temperature");
 
-static Process proc(PIN_RELAY,PIN_LED,PIN_BUTTON);
+static Process proc(PIN_RELAY,PIN_REDLED,PIN_BUTTON);
 
-bool switchOnOff(bool on) {
+// bool switchOnOff(bool on) {
 
-    digitalWrite(PIN_RELAY, on ? HIGH : LOW);
-    digitalWrite(PIN_REDLED, on ? LOW : HIGH);
-    switchNode.setProperty("on").send(on ? "true" : "false");
-    Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+//     digitalWrite(PIN_RELAY, on ? HIGH : LOW);
+//     digitalWrite(PIN_REDLED, on ? LOW : HIGH);
+//     switchNode.setProperty("on").send(on ? "true" : "false");
+//     Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
 
-    return digitalRead(PIN_RELAY) == HIGH;;
-}
+//     return digitalRead(PIN_RELAY) == HIGH;;
+// }
 
-bool switchOnHandler(HomieRange range, String value) {
-    if (value != "true" && value != "false") return false;
+// bool switchOnHandler(HomieRange range, String value) {
+//     if (value != "true" && value != "false") return false;
 
-    bool on = (value == "true");
+//     bool on = (value == "true");
 
-    switchOnOff(on);
+//     switchOnOff(on);
 
-    return true;
-}
+//     return true;
+// }
 
-void toggleRelay() {
-    bool on = digitalRead(PIN_RELAY) == HIGH;
-    digitalWrite(PIN_RELAY, on ? LOW : HIGH);
-    digitalWrite(PIN_REDLED, on ? HIGH : LOW);
-    switchNode.setProperty("on").send(on ? "false" : "true");
-    Homie.getLogger() << "Switch is " << (on ? "off" : "on") << endl;
-}
+// void toggleRelay() {
+//     bool on = digitalRead(PIN_RELAY) == HIGH;
+//     digitalWrite(PIN_RELAY, on ? LOW : HIGH);
+//     digitalWrite(PIN_REDLED, on ? HIGH : LOW);
+//     switchNode.setProperty("on").send(on ? "false" : "true");
+//     Homie.getLogger() << "Switch is " << (on ? "off" : "on") << endl;
+// }
 
 void loopHandler() {
 
@@ -68,8 +68,6 @@ void loopHandler() {
         DS18B20.requestTemperatures();
         float temperature = DS18B20.getTempCByIndex(0);
 
-        Homie.getLogger() << "Temperature: " << temperature << " °C" << endl;
-        switchNode.setProperty("degrees").send(String(temperature));
         lastTemperatureSent = millis();
         proc.newPV(temperature, millis() / 1000);
     }
@@ -78,21 +76,21 @@ void loopHandler() {
     //     proc.everySecond(millis() / 1000);
     // }
     
-    byte buttonState = digitalRead(PIN_BUTTON);
-    if ( buttonState != lastButtonState ) {
-        if (buttonState == LOW) {
-            buttonDownTime     = millis();
-            buttonPressHandled = 0;
-        }
-        else {
-            unsigned long dt = millis() - buttonDownTime;
-            if ( dt >= 90 && dt <= 900 && buttonPressHandled == 0 ) {
-                toggleRelay();
-                buttonPressHandled = 1;
-            }
-        }
-        lastButtonState = buttonState;
-    }
+    // byte buttonState = digitalRead(PIN_BUTTON);
+    // if ( buttonState != lastButtonState ) {
+    //     if (buttonState == LOW) {
+    //         buttonDownTime     = millis();
+    //         buttonPressHandled = 0;
+    //     }
+    //     else {
+    //         unsigned long dt = millis() - buttonDownTime;
+    //         if ( dt >= 90 && dt <= 900 && buttonPressHandled == 0 ) {
+    //             toggleRelay();
+    //             buttonPressHandled = 1;
+    //         }
+    //     }
+    //     lastButtonState = buttonState;
+    // }
 }
 
 void setupHandler() {
@@ -104,11 +102,6 @@ void setup() {
     Serial.begin(115200);
     Serial.println();
     Serial.println();
-    pinMode(PIN_RELAY, OUTPUT);
-    pinMode(PIN_REDLED, OUTPUT);
-    pinMode(PIN_BUTTON, INPUT);
-    digitalWrite(PIN_RELAY, LOW);
-    digitalWrite(PIN_REDLED, HIGH);
 
     Homie_setFirmware("itead-sonoff-buton", "1.0.3");
     Homie.setLedPin(PIN_LED, LOW).setResetTrigger(PIN_BUTTON, LOW, 5000);
