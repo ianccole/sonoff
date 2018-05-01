@@ -102,6 +102,8 @@ bool Process::procHandler(const String  &property, HomieRange range, String valu
          _tp.setInterval(value.toInt());
     }
 
+    _run_pid_now = true;
+
     return true;
 }
 
