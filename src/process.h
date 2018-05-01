@@ -108,7 +108,12 @@ class RelaisNode : public HomieNode {
 
 class Process: public HomieNode {
 public:
-    Process();
+    Process(
+        int pinRelay,
+        int pinLED,
+        int pinButton
+
+    );
 
     void setHandler(const switchHandler& handler) { _handler = handler; }
     void newPV(float value, unsigned long nowSecs);
@@ -125,6 +130,8 @@ private:
     bool switchOnOff(bool on);
     bool switchOnHandler(HomieRange range, String value);
     void everySecond(unsigned long nowSecs);
+
+    void toggleRelay();
 
     void initPID(
         double setpoint, 
@@ -150,6 +157,9 @@ private:
 
     PID             _pid;
     Timeprop        _tp;
+    int             _pinRelay;
+    int             _pinLED;
+    int             _pinButton;
     int             _state;
 
     int             _max_interval = PID_MAX_INTERVAL;

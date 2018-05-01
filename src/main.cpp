@@ -32,7 +32,7 @@ byte buttonPressHandled = 0;
 HomieNode switchNode("switch", "switch");
 // HomieNode temperatureNode("temperature", "temperature");
 
-static Process proc;
+static Process proc(PIN_RELAY,PIN_LED,PIN_BUTTON);
 
 bool switchOnOff(bool on) {
 

@@ -1,11 +1,14 @@
 #include "process.h"
 
-const int PIN_RELAY = 12;
-const int PIN_LED = 13;
-const int PIN_REDLED = 4;
-
-Process::Process() 
+Process::Process(
+        int pinRelay,
+        int pinLED,
+        int pinButton
+) 
     : HomieNode("switch", "switch"),
+    _pinRelay(pinRelay),
+    _pinLED(pinLED),
+    _pinButton(pinButton),
     _state(0), 
     _handler(nullptr),
     _max_interval(PID_MAX_INTERVAL),
@@ -16,12 +19,12 @@ Process::Process()
 
 bool Process::switchOnOff(bool on) {
 
-    digitalWrite(PIN_RELAY, on ? HIGH : LOW);
-    digitalWrite(PIN_REDLED, on ? LOW : HIGH);
+    digitalWrite(_pinRelay, on ? HIGH : LOW);
+    digitalWrite(_pinLED, on ? LOW : HIGH);
     setProperty("on").send(on ? "true" : "false");
     Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
 
-    return digitalRead(PIN_RELAY) == HIGH;;
+    return digitalRead(_pinRelay) == HIGH;;
 }
 
 bool Process::switchOnHandler(HomieRange range, String value) {
@@ -204,8 +207,8 @@ void Process::everySecond(unsigned long nowSecs) {
 
 void Process::setup() {
     setProperty("unit").send("c");
+    advertise("on").settable();
 
-    // advertise("on").settable(switchOnHandler);
 
     init();
 }
@@ -215,14 +218,56 @@ void Process::onReadyToOperate() {
 	// RelaisNode::updateRelais(0xFFFF);
 }
 
+void Process::toggleRelay() {
+    bool on = digitalRead(_pinRelay) == HIGH;
+    digitalWrite(_pinRelay, on ? LOW : HIGH);
+    digitalWrite(_pinLED, on ? HIGH : LOW);
+    setProperty("on").send(on ? "false" : "true");
+    Homie.getLogger() << "Switch is " << (on ? "off" : "on") << endl;
+}
+
 void Process::loop() {
+    static unsigned long buttonDownTime = 0;
+    static byte lastButtonState = 1;
+    static byte buttonPressHandled = 0;
+
     if (millis() % 1000 == 0) {
         everySecond(millis() / 1000);
     }
+
+    byte buttonState = digitalRead(_pinButton);
+    if ( buttonState != lastButtonState ) {
+        if (buttonState == LOW) {
+            buttonDownTime     = millis();
+            buttonPressHandled = 0;
+        }
+        else {
+            unsigned long dt = millis() - buttonDownTime;
+            if ( dt >= 90 && dt <= 900 && buttonPressHandled == 0 ) {
+                toggleRelay();
+                buttonPressHandled = 1;
+            }
+        }
+        lastButtonState = buttonState;
+    }
+    
 }
 
 bool Process::handleInput(const String  &property, const HomieRange& range, const String &value) {
-	int16_t id = range.index;
+    Homie.getLogger() 
+        << "Event: property " 
+        << property
+        << "index " 
+        << range.index
+        << "value " 
+        << value 
+        << endl;
+
+    if ( property.equalsIgnoreCase("on") ) {
+        switchOnHandler(range,value);
+    }
+
+	// int16_t id = range.index;
 	// if (id <= 0 || id > 16) {
 	// 	LN.logf("RelaisNode::handleInput()", LoggerNode::ERROR,
 	// 			"Receive unknown property %s with value %s.", property.c_str(),
