@@ -81,11 +81,11 @@ bool Process::procHandler(const String  &property, HomieRange range, String valu
     //      _pid.set(value.toFloat);
     // }
 
-    if ( property.equalsIgnoreCase("cycleTime") ) {
+    if ( property.equalsIgnoreCase("cycletime") ) {
     	setProperty(property).send(value);
          _tp.setCt(value.toInt());
     }
-    if ( property.equalsIgnoreCase("deadTime") ) {
+    if ( property.equalsIgnoreCase("deadtime") ) {
     	setProperty(property).send(value);
          _tp.setDt(value.toInt());
     }
@@ -93,11 +93,11 @@ bool Process::procHandler(const String  &property, HomieRange range, String valu
     	setProperty(property).send(value);
          _tp.setInvert(value.toInt());
     }
-    if ( property.equalsIgnoreCase("fallbackPower") ) {
+    if ( property.equalsIgnoreCase("fallbackpower") ) {
     	setProperty(property).send(value);
          _tp.setFallback(value.toFloat());
     }
-    if ( property.equalsIgnoreCase("maxUpdateInterval") ) {
+    if ( property.equalsIgnoreCase("maxupdateinterval") ) {
     	setProperty(property).send(value);
          _tp.setInterval(value.toInt());
     }
@@ -145,11 +145,11 @@ void Process::initTP(
     unsigned long nowSecs
 )
 {
-	setProperty("cycleTime").send(String(cycleTime));
-	setProperty("deadTime").send(String(deadTime));
+	setProperty("cycletime").send(String(cycleTime));
+	setProperty("deadtime").send(String(deadTime));
 	setProperty("invert").send(String(invert));
-	setProperty("fallbackPower").send(String(fallbackPower));
-	setProperty("maxUpdateInterval").send(String(maxUpdateInterval));
+	setProperty("fallbackpower").send(String(fallbackPower));
+	setProperty("maxupdateinterval").send(String(maxUpdateInterval));
 
     _tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
@@ -215,11 +215,11 @@ void Process::setup() {
     advertise("updatesecs").settable();
     advertise("power");
 
-    advertise("cycleTime").settable();
-    advertise("deadTime").settable();
+    advertise("cycletime").settable();
+    advertise("deadtime").settable();
     advertise("invert").settable();
-    advertise("fallbackPower").settable();
-    advertise("maxUpdateInterval").settable();
+    advertise("fallbackpower").settable();
+    advertise("maxupdateinterval").settable();
     advertise("state");
     advertise("stateTime");
     

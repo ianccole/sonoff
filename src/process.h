@@ -5,11 +5,11 @@
 #include <PID.h>
 #include <Timeprop.h>
 
-#define PID_SETPOINT                  19.5      // Setpoint value. This is the process value that the process is
+#define PID_SETPOINT                  19.0      // Setpoint value. This is the process value that the process is
                                                 // aiming for.
                                                 // May be adjusted via MQTT using cmnd pid_sp
 
-#define PID_PROPBAND                  5         // Proportional band in process units (eg degrees). This controls
+#define PID_PROPBAND                  1.5       // Proportional band in process units (eg degrees). This controls
                                                 // the gain of the loop and is the range of process value over which
                                                 // the power output will go from 0 to full power. The units are that
                                                 // of the process and setpoint, so for example in a heating
@@ -88,11 +88,11 @@
                                                 // explained in xdrv_91_timeprop.ino
                                                 // To disable this feature leave this undefined (undefined, not defined to nothing).
 
-#define TIMEPROP_CYCLETIME           60         // cycle time seconds
-#define TIMEPROP_DEADTIME            0          // actuator action time seconds
+#define TIMEPROP_CYCLETIME           600        // cycle time seconds
+#define TIMEPROP_DEADTIME            120        // actuator action time seconds
 #define TIMEPROP_OPINVERT            false      // whether to invert the output
 #define TIMEPROP_FALLBACK_POWER      0          // falls back to this if too long betwen power updates
-#define TIMEPROP_MAX_UPDATE_INTERVAL 120        // max no secs that are allowed between power updates (0 to disable)
+#define TIMEPROP_MAX_UPDATE_INTERVAL 240        // max no secs that are allowed between power updates (0 to disable)
 
 typedef std::function<bool(bool on)> switchHandler;
 
