@@ -190,7 +190,7 @@ void Process::everySecond(unsigned long nowSecs) {
         Homie.getLogger() << "new switch " << (newState ? "on" : "off") <<  " at : " << nowSecs << endl;
         switchOnOff(newState);
         setProperty("state").send(String(newState));
-        setProperty("stateTime").send(String(nowSecs-change_secs));
+        setProperty("statetime").send(String(nowSecs-change_secs));
         Homie.getLogger() << "state time: " << nowSecs-change_secs << endl;
         _state = newState;
         change_secs = nowSecs;
@@ -221,7 +221,7 @@ void Process::setup() {
     advertise("fallbackpower").settable();
     advertise("maxupdateinterval").settable();
     advertise("state");
-    advertise("stateTime");
+    advertise("statetime");
     
     pinMode(_pinRelay, OUTPUT);
     pinMode(_pinLED, OUTPUT);
