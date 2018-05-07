@@ -69,7 +69,7 @@ void loopHandler() {
         float temperature = DS18B20.getTempCByIndex(0);
 
         lastTemperatureSent = millis();
-        proc.newPV(temperature, millis() / 1000);
+        proc.newIntTemp(temperature);
     }
 
     // if (millis() % 1000 == 0) {

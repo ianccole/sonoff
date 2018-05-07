@@ -13,7 +13,8 @@ Process::Process(
     _max_interval(PID_MAX_INTERVAL),
     _update_seconds(PID_UPDATE_SECS),
     _last_pv_update_secs(0),
-    _run_pid_now(false) {
+    _run_pid_now(false),
+    _externalSensor(false) {
 }
 
 bool Process::switchOnOff(bool on) {
@@ -101,6 +102,14 @@ bool Process::procHandler(const String  &property, HomieRange range, String valu
     	setProperty(property).send(value);
          _tp.setInterval(value.toInt());
     }
+    if ( property.equalsIgnoreCase("externalsensor") ) {
+    	setProperty(property).send(value);
+        _externalSensor = value.toInt();
+    }
+    if ( property.equalsIgnoreCase("externaltemp") ) {
+    	setProperty(property).send(value);
+        newExtTemp(value.toFloat());
+    }
 
     _run_pid_now = true;
 
@@ -154,14 +163,32 @@ void Process::initTP(
     _tp.initialise(cycleTime, deadTime, invert, fallbackPower, maxUpdateInterval, nowSecs);
 }
 
-void Process::newPV(float value, unsigned long seconds) {
+void Process::newIntTemp(float value) {
     Homie.getLogger() << "Temperature: " << value << " °C" << endl;
-    setProperty("degrees").send(String(value));
+    setProperty("internaltemp").send(String(value));
 
-    _last_pv_update_secs = seconds;
-    _pid.setPv(value, seconds);
-    if (_update_seconds == 0) {
-        _run_pid_now = true;
+    if (_externalSensor == false) {
+        unsigned long seconds = millis() / 1000;
+        setProperty("processvalue").send(String(value));
+        _last_pv_update_secs = seconds;
+        _pid.setPv(value, seconds);
+        if (_update_seconds == 0) {
+            _run_pid_now = true;
+        }
+    }
+}
+
+void Process::newExtTemp(float value) {
+    Homie.getLogger() << "Ext Temperature: " << value << " °C" << endl;
+
+    if (_externalSensor == true) {
+        unsigned long seconds = millis() / 1000;
+        setProperty("processvalue").send(String(value));
+        _last_pv_update_secs = seconds;
+        _pid.setPv(value, seconds);
+        if (_update_seconds == 0) {
+            _run_pid_now = true;
+        }
     }
 }
 
@@ -200,7 +227,10 @@ void Process::everySecond(unsigned long nowSecs) {
 void Process::setup() {
     advertise("on").settable();
     advertise("unit");
-    advertise("degrees");
+    advertise("internaltemp");
+    advertise("externalsensor").settable();
+    advertise("externaltemp").settable();
+    advertise("processvalue");
 
     advertise("setpoint").settable();
     advertise("propband").settable();
@@ -232,6 +262,7 @@ void Process::setup() {
 
 void Process::onReadyToOperate() {
     setProperty("unit").send("c");
+	setProperty("externalsensor").send("0");
 
     initPID( 
         PID_SETPOINT, 

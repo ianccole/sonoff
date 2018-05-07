@@ -115,8 +115,8 @@ public:
 
     );
 
-    void newPV(float value, unsigned long nowSecs);
-
+    void newIntTemp(float value);
+    void newExtTemp(float value);
 protected:
     virtual void setup() override;
     virtual void loop() override;
@@ -165,6 +165,7 @@ private:
     int             _update_seconds;
     long            _last_pv_update_secs;
     bool            _run_pid_now;
+    bool            _externalSensor;
 };
 
 #endif // process_h
