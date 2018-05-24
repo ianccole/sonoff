@@ -8,10 +8,14 @@
 #include <Homie.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "DHT.h"
 
 #include "process.h"
 #include "PID.h"
 #include "Timeprop.h"
+
+#define DHTPIN 14 
+#define DHTTYPE DHT21
 
 const int PIN_ONE_WIRE = 14;
 const int PIN_RELAY = 12;
@@ -22,15 +26,18 @@ const int PIN_REDLED = 4;
 const int TEMPERATURE_INTERVAL = 60;			// seconds
 unsigned long lastTemperatureSent = 0;
 
-OneWire oneWire(PIN_ONE_WIRE);
-DallasTemperature DS18B20(&oneWire);
+DHT dht(DHTPIN, DHTTYPE);
+
+// OneWire oneWire(PIN_ONE_WIRE);
+// DallasTemperature DS18B20(&oneWire);
 
 unsigned long buttonDownTime = 0;
 byte lastButtonState = 1;
 byte buttonPressHandled = 0;
 
 // HomieNode switchNode("switch", "switch");
-// HomieNode temperatureNode("temperature", "temperature");
+HomieNode temperatureNode("temperature", "temperature");
+HomieNode humidityNode("humidity", "humidity");
 
 static Process proc(PIN_RELAY,PIN_REDLED,PIN_BUTTON);
 
@@ -65,37 +72,26 @@ static Process proc(PIN_RELAY,PIN_REDLED,PIN_BUTTON);
 void loopHandler() {
 
     if (millis() - lastTemperatureSent >= TEMPERATURE_INTERVAL * 1000UL || lastTemperatureSent == 0) {
-        DS18B20.requestTemperatures();
-        float temperature = DS18B20.getTempCByIndex(0);
+
+        // DS18B20.requestTemperatures();
+        // float temperature = DS18B20.getTempCByIndex(0);
+
+        float humidity = dht.readHumidity();
+        float temperature = dht.readTemperature(true);
+        temperatureNode.setProperty("F").send(String(temperature));
+        humidityNode.setProperty("F").send(String(humidity));
 
         lastTemperatureSent = millis();
         proc.newIntTemp(temperature);
     }
-
-    // if (millis() % 1000 == 0) {
-    //     proc.everySecond(millis() / 1000);
-    // }
-    
-    // byte buttonState = digitalRead(PIN_BUTTON);
-    // if ( buttonState != lastButtonState ) {
-    //     if (buttonState == LOW) {
-    //         buttonDownTime     = millis();
-    //         buttonPressHandled = 0;
-    //     }
-    //     else {
-    //         unsigned long dt = millis() - buttonDownTime;
-    //         if ( dt >= 90 && dt <= 900 && buttonPressHandled == 0 ) {
-    //             toggleRelay();
-    //             buttonPressHandled = 1;
-    //         }
-    //     }
-    //     lastButtonState = buttonState;
-    // }
 }
 
 void setupHandler() {
     // proc.setup();
     // proc.setHandler(switchOnOff);
+
+    temperatureNode.setProperty("unit").setRetained(true).send("F");
+    humidityNode.setProperty("unit").setRetained(true).send("percent");  
 }
 
 void setup() {
@@ -110,6 +106,12 @@ void setup() {
 
     Homie.setSetupFunction(setupHandler);
     Homie.setLoopFunction(loopHandler);
+
+    temperatureNode.advertise("unit");
+    temperatureNode.advertise("temperature");
+    humidityNode.advertise("unit");
+    humidityNode.advertise("percent");
+
     Homie.setup();
 }
 
