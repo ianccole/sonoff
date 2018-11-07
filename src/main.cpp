@@ -47,10 +47,8 @@ void toggleRelay() {
 
 void loopHandler() {
     if (millis() - lastTemperatureSent >= TEMPERATURE_INTERVAL * 1000UL || lastTemperatureSent == 0) {
-      float temperature = 22; // Fake temperature here, for the example
-
       DS18B20.requestTemperatures();
-      temperature = DS18B20.getTempCByIndex(0);
+      float temperature = DS18B20.getTempCByIndex(0);
 
       Homie.getLogger() << "Temperature: " << temperature << " °C" << endl;
       temperatureNode.setProperty("degrees").send(String(temperature));
@@ -87,12 +85,12 @@ void setup() {
   pinMode(PIN_BUTTON, INPUT);
   digitalWrite(PIN_RELAY, LOW);
 
-  Homie_setFirmware("itead-sonoff-buton", "1.0.3");
+  Homie_setFirmware("sonoff-ds18b20", "1.0.1");
   Homie.setLedPin(PIN_LED, LOW).setResetTrigger(PIN_BUTTON, LOW, 5000);
 
   switchNode.advertise("on").settable(switchOnHandler);
 
- 	Homie.setSetupFunction(setupHandler);
+  Homie.setSetupFunction(setupHandler);
   Homie.setLoopFunction(loopHandler);
   Homie.setup();
 }
